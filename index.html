@@ -1,64 +1,152 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
+
 <title>My Chat</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#f2f2f2}
-.header{background:#128C7E;color:white;padding:16px;font-size:22px;font-weight:bold}
-.box{padding:25px;text-align:center}
-input{padding:12px;margin:6px;width:80%;border:1px solid #ccc;border-radius:20px;box-sizing:border-box}
-button{padding:12px 18px;margin:5px;border:0;border-radius:20px;background:#128C7E;color:white}
-#chat{display:none}
-#messages{height:65vh;overflow-y:auto;padding:10px}
-.message{background:white;padding:10px;margin:8px 0;border-radius:10px}
-.bottom{position:fixed;bottom:0;width:100%;display:flex;padding:8px;background:white;box-sizing:border-box}
-#text{flex:1}
+
+body{
+    margin:0;
+    font-family:Arial;
+    background:#f2f2f2;
+}
+
+.header{
+    background:#128C7E;
+    color:white;
+    padding:16px;
+    font-size:22px;
+    font-weight:bold;
+}
+
+.box{
+    padding:25px;
+    text-align:center;
+}
+
+input{
+    padding:12px;
+    margin:6px;
+    width:80%;
+    border:1px solid #ccc;
+    border-radius:20px;
+    box-sizing:border-box;
+}
+
+button{
+    padding:12px 18px;
+    margin:5px;
+    border:0;
+    border-radius:20px;
+    background:#128C7E;
+    color:white;
+}
+
+#chat{
+    display:none;
+}
+
+#messages{
+    height:65vh;
+    overflow-y:auto;
+    padding:10px;
+}
+
+.message{
+    background:white;
+    padding:10px;
+    margin:8px 0;
+    border-radius:10px;
+}
+
+.bottom{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    display:flex;
+    padding:8px;
+    background:white;
+    box-sizing:border-box;
+}
+
+#text{
+    flex:1;
+}
+
 </style>
+
 </head>
 
 <body>
 
-<div class="header">💬 My Chat</div>
+<div class="header">
+    💬 My Chat
+</div>
 
 <div id="login" class="box">
 
-<h3>My Chat Account</h3>
+    <h3>My Chat Account</h3>
 
-<input id="username" placeholder="Username">
+    <input
+        id="username"
+        placeholder="Username"
+    >
 
-<input id="password" type="password" placeholder="Password">
+    <input
+        id="password"
+        type="password"
+        placeholder="Password"
+    >
 
-<br>
+    <br>
 
-<button onclick="register()">Register</button>
-<button onclick="login()">Login</button>
+    <button onclick="register()">
+        Register
+    </button>
 
-<p id="status"></p>
+    <button onclick="login()">
+        Login
+    </button>
+
+    <p id="status"></p>
 
 </div>
 
 
 <div id="chat">
 
-<div class="box">
+    <div class="box">
 
-<p>Logged in as: <b id="me"></b></p>
+        <p>
+            Logged in as:
+            <b id="me"></b>
+        </p>
 
-<input id="receiver" placeholder="Receiver username">
+        <input
+            id="receiver"
+            placeholder="Receiver username"
+        >
 
-</div>
+    </div>
 
-<div id="messages"></div>
+    <div id="messages"></div>
 
-<div class="bottom">
+    <div class="bottom">
 
-<input id="text" placeholder="Message...">
+        <input
+            id="text"
+            placeholder="Message..."
+        >
 
-<button onclick="sendMessage()">Send</button>
+        <button onclick="sendMessage()">
+            Send
+        </button>
 
-</div>
+    </div>
 
 </div>
 
@@ -66,155 +154,297 @@ button{padding:12px 18px;margin:5px;border:0;border-radius:20px;background:#128C
 <script>
 
 let ws;
-let myUsername="";
+let myUsername = "";
 
 
 function connect(){
 
-    ws = new WebSocket("ws://127.0.0.1:8765");
+    const protocol =
+        window.location.protocol === "https:"
+        ? "wss:"
+        : "ws:";
 
-    ws.onopen=function(){
-        console.log("Connected");
+    ws = new WebSocket(
+        protocol +
+        "//" +
+        window.location.host +
+        "/ws"
+    );
+
+
+    ws.onopen = function(){
+
+        document.getElementById(
+            "status"
+        ).textContent =
+            "Connected to server";
+
     };
 
-    ws.onmessage=function(event){
 
-        const data=JSON.parse(event.data);
+    ws.onmessage = function(event){
 
-        if(data.type==="register"){
+        const data =
+            JSON.parse(event.data);
 
-            document.getElementById("status").textContent=data.message;
+
+        if(data.type === "register"){
+
+            document.getElementById(
+                "status"
+            ).textContent =
+                data.message;
 
         }
 
-        if(data.type==="login"){
+
+        if(data.type === "login"){
 
             if(data.success){
 
-                myUsername=data.username;
+                myUsername =
+                    data.username;
 
-                document.getElementById("login").style.display="none";
+                document.getElementById(
+                    "login"
+                ).style.display =
+                    "none";
 
-                document.getElementById("chat").style.display="block";
+                document.getElementById(
+                    "chat"
+                ).style.display =
+                    "block";
 
-                document.getElementById("me").textContent=myUsername;
+                document.getElementById(
+                    "me"
+                ).textContent =
+                    myUsername;
 
             }else{
 
-                document.getElementById("status").textContent=data.message;
+                document.getElementById(
+                    "status"
+                ).textContent =
+                    data.message;
 
             }
+
         }
 
-        if(data.type==="message"){
+
+        if(data.type === "message"){
 
             addMessage(
-                data.sender + ": " + data.message
+                data.sender +
+                ": " +
+                data.message
             );
 
         }
 
     };
 
-    ws.onclose=function(){
 
-        document.getElementById("status").textContent=
+    ws.onclose = function(){
+
+        document.getElementById(
+            "status"
+        ).textContent =
             "Disconnected from server";
 
     };
+
+
+    ws.onerror = function(){
+
+        document.getElementById(
+            "status"
+        ).textContent =
+            "Server connection error";
+
+    };
+
 }
 
 
 function register(){
 
-    const username=document.getElementById("username").value.trim();
+    const username =
+        document.getElementById(
+            "username"
+        ).value.trim();
 
-    const password=document.getElementById("password").value;
+    const password =
+        document.getElementById(
+            "password"
+        ).value;
+
 
     if(!username || !password){
 
-        document.getElementById("status").textContent=
+        document.getElementById(
+            "status"
+        ).textContent =
             "Username and password required";
 
         return;
+
     }
 
-    ws.send(JSON.stringify({
 
-        action:"register",
+    if(!ws ||
+       ws.readyState !== WebSocket.OPEN){
 
-        username:username,
+        document.getElementById(
+            "status"
+        ).textContent =
+            "Server not connected";
 
-        password:password
+        return;
 
-    }));
+    }
+
+
+    ws.send(
+        JSON.stringify({
+
+            action:"register",
+
+            username:username,
+
+            password:password
+
+        })
+    );
 
 }
 
 
 function login(){
 
-    const username=document.getElementById("username").value.trim();
+    const username =
+        document.getElementById(
+            "username"
+        ).value.trim();
 
-    const password=document.getElementById("password").value;
+    const password =
+        document.getElementById(
+            "password"
+        ).value;
+
 
     if(!username || !password){
 
-        document.getElementById("status").textContent=
+        document.getElementById(
+            "status"
+        ).textContent =
             "Username and password required";
 
         return;
+
     }
 
-    ws.send(JSON.stringify({
 
-        action:"login",
+    if(!ws ||
+       ws.readyState !== WebSocket.OPEN){
 
-        username:username,
+        document.getElementById(
+            "status"
+        ).textContent =
+            "Server not connected";
 
-        password:password
+        return;
 
-    }));
+    }
+
+
+    ws.send(
+        JSON.stringify({
+
+            action:"login",
+
+            username:username,
+
+            password:password
+
+        })
+    );
 
 }
 
 
 function sendMessage(){
 
-    const receiver=document.getElementById("receiver").value.trim();
+    const receiver =
+        document.getElementById(
+            "receiver"
+        ).value.trim();
 
-    const text=document.getElementById("text").value.trim();
+    const text =
+        document.getElementById(
+            "text"
+        ).value.trim();
+
 
     if(!receiver || !text){
 
-        alert("Receiver and message required");
+        alert(
+            "Receiver and message required"
+        );
 
         return;
+
     }
 
-    ws.send(JSON.stringify({
 
-        action:"message",
+    if(!ws ||
+       ws.readyState !== WebSocket.OPEN){
 
-        receiver:receiver,
+        alert(
+            "Server disconnected"
+        );
 
-        message:text
+        return;
 
-    }));
+    }
 
-    document.getElementById("text").value="";
+
+    ws.send(
+        JSON.stringify({
+
+            action:"message",
+
+            receiver:receiver,
+
+            message:text
+
+        })
+    );
+
+
+    document.getElementById(
+        "text"
+    ).value = "";
+
 }
 
 
 function addMessage(text){
 
-    const div=document.createElement("div");
+    const div =
+        document.createElement(
+            "div"
+        );
 
-    div.className="message";
+    div.className =
+        "message";
 
-    div.textContent=text;
+    div.textContent =
+        text;
 
-    document.getElementById("messages").appendChild(div);
+    document.getElementById(
+        "messages"
+    ).appendChild(div);
 
 }
 
