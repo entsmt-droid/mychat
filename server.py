@@ -46,17 +46,13 @@ def hash_password(password):
 def register_user(username, password):
     try:
         conn = db()
-
         conn.execute(
             "INSERT INTO users (username, password) VALUES (?, ?)",
             (username, hash_password(password))
         )
-
         conn.commit()
         conn.close()
-
         return True
-
     except sqlite3.IntegrityError:
         return False
 
@@ -74,12 +70,34 @@ def login_user(username, password):
     return row is not None
 
 
-def get_users():
+def user_exists(username):
     conn = db()
 
-    rows = conn.execute(
-        "SELECT username FROM users ORDER BY username"
-    ).fetchall()
+    row = conn.execute(
+        "SELECT id FROM users WHERE username=?",
+        (username,)
+    ).fetchone()
+
+    conn.close()
+
+    return row is not None
+
+
+def get_chat_users(username):
+    conn = db()
+
+    rows = conn.execute("""
+        SELECT
+            CASE
+                WHEN sender=? THEN receiver
+                ELSE sender
+            END AS chat_user,
+            MAX(id) AS last_id
+        FROM messages
+        WHERE sender=? OR receiver=?
+        GROUP BY chat_user
+        ORDER BY last_id DESC
+    """, (username, username, username)).fetchall()
 
     conn.close()
 
@@ -118,25 +136,28 @@ async def send_json(ws, data):
     await ws.send_str(json.dumps(data))
 
 
-async def broadcast_users():
-    users = get_users()
+async def send_chat_list(ws, username):
+    chat_users = get_chat_users(username)
+    online_users = set(clients.values())
 
-    online = set(clients.values())
+    chats = []
 
-    data = {
-        "type": "users",
-        "users": [
-            {
-                "username": user,
-                "online": user in online
-            }
-            for user in users
-        ]
-    }
+    for user in chat_users:
+        chats.append({
+            "username": user,
+            "online": user in online_users
+        })
 
-    for client in list(clients.keys()):
+    await send_json(ws, {
+        "type": "chat_list",
+        "chats": chats
+    })
+
+
+async def broadcast_chat_lists():
+    for ws, username in list(clients.items()):
         try:
-            await send_json(client, data)
+            await send_chat_list(ws, username)
         except:
             pass
 
@@ -145,8 +166,6 @@ async def websocket_chat(request):
 
     ws = web.WebSocketResponse()
     await ws.prepare(request)
-
-    username = None
 
     try:
 
@@ -178,7 +197,10 @@ async def websocket_chat(request):
 
                     continue
 
-                success = register_user(username, password)
+                success = register_user(
+                    username,
+                    password
+                )
 
                 await send_json(ws, {
                     "type": "register",
@@ -188,9 +210,6 @@ async def websocket_chat(request):
                         if success
                         else "Username already exists"
                 })
-
-                if success:
-                    await broadcast_users()
 
             # LOGIN
             elif action == "login":
@@ -208,18 +227,12 @@ async def websocket_chat(request):
                         "username": username
                     })
 
-                    await send_json(ws, {
-                        "type": "users",
-                        "users": [
-                            {
-                                "username": user,
-                                "online": user in set(clients.values())
-                            }
-                            for user in get_users()
-                        ]
-                    })
+                    await send_chat_list(
+                        ws,
+                        username
+                    )
 
-                    await broadcast_users()
+                    await broadcast_chat_lists()
 
                 else:
 
@@ -229,13 +242,63 @@ async def websocket_chat(request):
                         "message": "Wrong username or password"
                     })
 
-            # GET HISTORY
+            # NEW CHAT
+            elif action == "new_chat":
+
+                if ws not in clients:
+                    continue
+
+                username = data.get(
+                    "username",
+                    ""
+                ).strip()
+
+                if not username:
+
+                    await send_json(ws, {
+                        "type": "new_chat",
+                        "success": False,
+                        "message": "Username required"
+                    })
+
+                    continue
+
+                if username == clients[ws]:
+
+                    await send_json(ws, {
+                        "type": "new_chat",
+                        "success": False,
+                        "message": "You cannot chat with yourself"
+                    })
+
+                    continue
+
+                if not user_exists(username):
+
+                    await send_json(ws, {
+                        "type": "new_chat",
+                        "success": False,
+                        "message": "User not found"
+                    })
+
+                    continue
+
+                await send_json(ws, {
+                    "type": "new_chat",
+                    "success": True,
+                    "username": username
+                })
+
+            # HISTORY
             elif action == "history":
 
                 if ws not in clients:
                     continue
 
-                other = data.get("username", "").strip()
+                other = data.get(
+                    "username",
+                    ""
+                ).strip()
 
                 if not other:
                     continue
@@ -251,14 +314,18 @@ async def websocket_chat(request):
                     "messages": history
                 })
 
-            # MARK SEEN
+            # SEEN
             elif action == "seen":
 
                 if ws not in clients:
                     continue
 
                 viewer = clients[ws]
-                sender = data.get("username", "").strip()
+
+                sender = data.get(
+                    "username",
+                    ""
+                ).strip()
 
                 if not sender:
                     continue
@@ -276,7 +343,7 @@ async def websocket_chat(request):
                 conn.commit()
                 conn.close()
 
-                # Sender ko seen status bhejo
+                # Sender ko Seen status
                 for client, user in list(clients.items()):
 
                     if user == sender:
@@ -295,18 +362,27 @@ async def websocket_chat(request):
                 if ws not in clients:
                     continue
 
+                sender = clients[ws]
+
                 receiver = data.get(
-                    "receiver", ""
+                    "receiver",
+                    ""
                 ).strip()
 
                 text = data.get(
-                    "message", ""
+                    "message",
+                    ""
                 ).strip()
 
                 if not receiver or not text:
                     continue
 
-                sender = clients[ws]
+                if not user_exists(receiver):
+                    await send_json(ws, {
+                        "type": "error",
+                        "message": "User not found"
+                    })
+                    continue
 
                 conn = db()
 
@@ -314,7 +390,11 @@ async def websocket_chat(request):
                     INSERT INTO messages
                     (sender, receiver, message, seen)
                     VALUES (?, ?, ?, 0)
-                """, (sender, receiver, text))
+                """, (
+                    sender,
+                    receiver,
+                    text
+                ))
 
                 message_id = cursor.lastrowid
 
@@ -330,7 +410,7 @@ async def websocket_chat(request):
                     "seen": False
                 }
 
-                # Receiver ko message
+                # Receiver ko
                 for client, user in list(clients.items()):
 
                     if user == receiver:
@@ -340,22 +420,41 @@ async def websocket_chat(request):
                                 client,
                                 message_data
                             )
+
+                            await send_chat_list(
+                                client,
+                                receiver
+                            )
+
                         except:
                             pass
 
-                # Sender ko bhi message
+                # Sender ko
                 await send_json(
                     ws,
                     message_data
                 )
 
+                # Sender ki chat list update
+                await send_chat_list(
+                    ws,
+                    sender
+                )
+
+            # LOGOUT / DISCONNECT
+            elif action == "logout":
+
+                if ws in clients:
+                    clients.pop(ws)
+
+                await broadcast_chat_lists()
+
     finally:
 
         if ws in clients:
-
             clients.pop(ws)
 
-            await broadcast_users()
+        await broadcast_chat_lists()
 
     return ws
 
@@ -428,5 +527,4 @@ async def main():
 
 
 if __name__ == "__main__":
-
     asyncio.run(main())
