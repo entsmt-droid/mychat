@@ -59,27 +59,21 @@ def register_user(username, password):
 
 def login_user(username, password):
     conn = db()
-
     row = conn.execute(
         "SELECT id FROM users WHERE username=? AND password=?",
         (username, hash_password(password))
     ).fetchone()
-
     conn.close()
-
     return row is not None
 
 
 def user_exists(username):
     conn = db()
-
     row = conn.execute(
         "SELECT id FROM users WHERE username=?",
         (username,)
     ).fetchone()
-
     conn.close()
-
     return row is not None
 
 
@@ -100,7 +94,6 @@ def get_chat_users(username):
     """, (username, username, username)).fetchall()
 
     conn.close()
-
     return [row[0] for row in rows]
 
 
@@ -137,20 +130,18 @@ async def send_json(ws, data):
 
 
 async def send_chat_list(ws, username):
-    chat_users = get_chat_users(username)
-    online_users = set(clients.values())
-
-    chats = []
-
-    for user in chat_users:
-        chats.append({
-            "username": user,
-            "online": user in online_users
-        })
+    chats = get_chat_users(username)
+    online = set(clients.values())
 
     await send_json(ws, {
         "type": "chat_list",
-        "chats": chats
+        "chats": [
+            {
+                "username": user,
+                "online": user in online
+            }
+            for user in chats
+        ]
     })
 
 
@@ -158,17 +149,15 @@ async def broadcast_chat_lists():
     for ws, username in list(clients.items()):
         try:
             await send_chat_list(ws, username)
-        except:
+        except Exception:
             pass
 
 
-async def websocket_chat(request):
-
+async def websocket_handler(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
 
     try:
-
         async for msg in ws:
 
             if msg.type != web.WSMsgType.TEXT:
@@ -176,7 +165,7 @@ async def websocket_chat(request):
 
             try:
                 data = json.loads(msg.data)
-            except:
+            except Exception:
                 continue
 
             action = data.get("action")
@@ -188,19 +177,14 @@ async def websocket_chat(request):
                 password = data.get("password", "")
 
                 if not username or not password:
-
                     await send_json(ws, {
                         "type": "register",
                         "success": False,
                         "message": "Username and password required"
                     })
-
                     continue
 
-                success = register_user(
-                    username,
-                    password
-                )
+                success = register_user(username, password)
 
                 await send_json(ws, {
                     "type": "register",
@@ -217,30 +201,24 @@ async def websocket_chat(request):
                 username = data.get("username", "").strip()
                 password = data.get("password", "")
 
-                if login_user(username, password):
-
-                    clients[ws] = username
-
-                    await send_json(ws, {
-                        "type": "login",
-                        "success": True,
-                        "username": username
-                    })
-
-                    await send_chat_list(
-                        ws,
-                        username
-                    )
-
-                    await broadcast_chat_lists()
-
-                else:
-
+                if not login_user(username, password):
                     await send_json(ws, {
                         "type": "login",
                         "success": False,
                         "message": "Wrong username or password"
                     })
+                    continue
+
+                clients[ws] = username
+
+                await send_json(ws, {
+                    "type": "login",
+                    "success": True,
+                    "username": username
+                })
+
+                await send_chat_list(ws, username)
+                await broadcast_chat_lists()
 
             # NEW CHAT
             elif action == "new_chat":
@@ -248,39 +226,31 @@ async def websocket_chat(request):
                 if ws not in clients:
                     continue
 
-                username = data.get(
-                    "username",
-                    ""
-                ).strip()
+                username = data.get("username", "").strip()
+                me = clients[ws]
 
                 if not username:
-
                     await send_json(ws, {
                         "type": "new_chat",
                         "success": False,
                         "message": "Username required"
                     })
-
                     continue
 
-                if username == clients[ws]:
-
+                if username == me:
                     await send_json(ws, {
                         "type": "new_chat",
                         "success": False,
                         "message": "You cannot chat with yourself"
                     })
-
                     continue
 
                 if not user_exists(username):
-
                     await send_json(ws, {
                         "type": "new_chat",
                         "success": False,
                         "message": "User not found"
                     })
-
                     continue
 
                 await send_json(ws, {
@@ -295,10 +265,7 @@ async def websocket_chat(request):
                 if ws not in clients:
                     continue
 
-                other = data.get(
-                    "username",
-                    ""
-                ).strip()
+                other = data.get("username", "").strip()
 
                 if not other:
                     continue
@@ -314,65 +281,15 @@ async def websocket_chat(request):
                     "messages": history
                 })
 
-            # SEEN
-            elif action == "seen":
-
-                if ws not in clients:
-                    continue
-
-                viewer = clients[ws]
-
-                sender = data.get(
-                    "username",
-                    ""
-                ).strip()
-
-                if not sender:
-                    continue
-
-                conn = db()
-
-                conn.execute("""
-                    UPDATE messages
-                    SET seen=1
-                    WHERE sender=?
-                    AND receiver=?
-                    AND seen=0
-                """, (sender, viewer))
-
-                conn.commit()
-                conn.close()
-
-                # Sender ko Seen status
-                for client, user in list(clients.items()):
-
-                    if user == sender:
-
-                        try:
-                            await send_json(client, {
-                                "type": "seen",
-                                "username": viewer
-                            })
-                        except:
-                            pass
-
-            # MESSAGE
+            # SEND MESSAGE
             elif action == "message":
 
                 if ws not in clients:
                     continue
 
                 sender = clients[ws]
-
-                receiver = data.get(
-                    "receiver",
-                    ""
-                ).strip()
-
-                text = data.get(
-                    "message",
-                    ""
-                ).strip()
+                receiver = data.get("receiver", "").strip()
+                text = data.get("message", "").strip()
 
                 if not receiver or not text:
                     continue
@@ -390,18 +307,14 @@ async def websocket_chat(request):
                     INSERT INTO messages
                     (sender, receiver, message, seen)
                     VALUES (?, ?, ?, 0)
-                """, (
-                    sender,
-                    receiver,
-                    text
-                ))
+                """, (sender, receiver, text))
 
                 message_id = cursor.lastrowid
 
                 conn.commit()
                 conn.close()
 
-                message_data = {
+                packet = {
                     "type": "message",
                     "id": message_id,
                     "sender": sender,
@@ -410,47 +323,109 @@ async def websocket_chat(request):
                     "seen": False
                 }
 
-                # Receiver ko
+                # Sender
+                await send_json(ws, packet)
+
+                # Receiver
                 for client, user in list(clients.items()):
-
                     if user == receiver:
-
                         try:
-                            await send_json(
-                                client,
-                                message_data
-                            )
-
-                            await send_chat_list(
-                                client,
-                                receiver
-                            )
-
-                        except:
+                            await send_json(client, packet)
+                        except Exception:
                             pass
-
-                # Sender ko
-                await send_json(
-                    ws,
-                    message_data
-                )
-
-                # Sender ki chat list update
-                await send_chat_list(
-                    ws,
-                    sender
-                )
-
-            # LOGOUT / DISCONNECT
-            elif action == "logout":
-
-                if ws in clients:
-                    clients.pop(ws)
 
                 await broadcast_chat_lists()
 
-    finally:
+            # SEEN
+            elif action == "seen":
 
+                if ws not in clients:
+                    continue
+
+                viewer = clients[ws]
+                sender = data.get("username", "").strip()
+
+                if not sender:
+                    continue
+
+                conn = db()
+
+                conn.execute("""
+                    UPDATE messages
+                    SET seen=1
+                    WHERE sender=?
+                    AND receiver=?
+                    AND seen=0
+                """, (sender, viewer))
+
+                conn.commit()
+                conn.close()
+
+                # Notify sender
+                for client, user in list(clients.items()):
+                    if user == sender:
+                        try:
+                            await send_json(client, {
+                                "type": "seen",
+                                "username": viewer
+                            })
+                        except Exception:
+                            pass
+
+            # DELETE CHAT FOR BOTH
+            elif action == "delete_chat":
+
+                if ws not in clients:
+                    continue
+
+                user1 = clients[ws]
+                user2 = data.get("username", "").strip()
+
+                if not user2:
+                    continue
+
+                conn = db()
+
+                conn.execute("""
+                    DELETE FROM messages
+                    WHERE
+                        (sender=? AND receiver=?)
+                        OR
+                        (sender=? AND receiver=?)
+                """, (user1, user2, user2, user1))
+
+                conn.commit()
+                conn.close()
+
+                # Tell both users
+                for client, user in list(clients.items()):
+
+                    if user == user1 or user == user2:
+
+                        other = (
+                            user2
+                            if user == user1
+                            else user1
+                        )
+
+                        try:
+                            await send_json(client, {
+                                "type": "chat_deleted",
+                                "username": other
+                            })
+
+                            await send_chat_list(
+                                client,
+                                user
+                            )
+
+                        except Exception:
+                            pass
+
+    except Exception as e:
+        print("WebSocket error:", e)
+
+    finally:
         if ws in clients:
             clients.pop(ws)
 
@@ -462,13 +437,11 @@ async def websocket_chat(request):
 async def index(request):
 
     try:
-
         with open(
             "index.html",
             "r",
             encoding="utf-8"
         ) as f:
-
             html = f.read()
 
         return web.Response(
@@ -477,7 +450,6 @@ async def index(request):
         )
 
     except Exception as e:
-
         return web.Response(
             text=str(e),
             status=500
@@ -490,25 +462,14 @@ async def main():
 
     app = web.Application()
 
-    app.router.add_get(
-        "/",
-        index
-    )
-
-    app.router.add_get(
-        "/ws",
-        websocket_chat
-    )
+    app.router.add_get("/", index)
+    app.router.add_get("/ws", websocket_handler)
 
     port = int(
-        os.environ.get(
-            "PORT",
-            8765
-        )
+        os.environ.get("PORT", "8765")
     )
 
     runner = web.AppRunner(app)
-
     await runner.setup()
 
     site = web.TCPSite(
@@ -520,7 +481,8 @@ async def main():
     await site.start()
 
     print(
-        f"MyChat running on port {port}"
+        "MyChat running on port",
+        port
     )
 
     await asyncio.Event().wait()
