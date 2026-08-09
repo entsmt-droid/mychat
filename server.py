@@ -3,6 +3,7 @@ import json
 import sqlite3
 import hashlib
 import websockets
+import os
 
 DB = "chat.db"
 clients = {}
@@ -71,7 +72,8 @@ async def chat(websocket):
                 await send_json(websocket, {
                     "type": "register",
                     "success": success,
-                    "message": "Registration successful" if success
+                    "message": "Registration successful"
+                               if success
                                else "Username already exists"
                 })
 
@@ -148,8 +150,10 @@ async def chat(websocket):
 
 
 async def main():
-    async with websockets.serve(chat, "0.0.0.0", 8765):
-        print("Chat server started on port 8765")
+    port = int(os.environ.get("PORT", 8765))
+
+    async with websockets.serve(chat, "0.0.0.0", port):
+        print(f"Chat server started on port {port}")
         await asyncio.Future()
 
 
