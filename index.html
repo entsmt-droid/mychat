@@ -1,16 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 
 <meta charset="UTF-8">
 
-<meta
-name="viewport"
-content="width=device-width,initial-scale=1"
->
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-<title>My Chat</title>
+<title>MyChat</title>
 
 <style>
 
@@ -18,13 +15,17 @@ content="width=device-width,initial-scale=1"
     box-sizing:border-box;
 }
 
-html,
-body{
+html,body{
     margin:0;
     width:100%;
     height:100%;
     font-family:Arial,sans-serif;
     background:#f0f2f5;
+}
+
+button{
+    border:0;
+    cursor:pointer;
 }
 
 .header{
@@ -38,43 +39,37 @@ body{
     font-weight:bold;
 }
 
-button{
-    border:0;
-    border-radius:8px;
-    padding:10px 15px;
-    background:#128C7E;
-    color:white;
-    cursor:pointer;
-}
-
-button:hover{
-    opacity:.9;
-}
-
-input{
-    border:1px solid #ddd;
-    border-radius:8px;
-    padding:12px;
-    outline:none;
-}
-
 .login{
-    max-width:400px;
+    width:min(400px,92%);
     margin:60px auto;
     background:white;
     padding:30px;
     border-radius:15px;
-    box-shadow:0 2px 12px #0001;
+    box-shadow:0 3px 15px #0002;
     text-align:center;
 }
 
 .login input{
     width:100%;
+    padding:13px;
     margin:7px 0;
+    border:1px solid #ddd;
+    border-radius:8px;
 }
 
-.login button{
-    margin:8px 4px;
+.primary{
+    background:#128C7E;
+    color:white;
+    padding:11px 17px;
+    border-radius:8px;
+    margin:5px;
+}
+
+.secondary{
+    background:#eee;
+    color:#333;
+    padding:11px 17px;
+    border-radius:8px;
 }
 
 #status{
@@ -83,7 +78,6 @@ input{
 
 .app{
     display:none;
-    width:100%;
     height:calc(100vh - 60px);
 }
 
@@ -95,12 +89,20 @@ input{
     flex-direction:column;
 }
 
-.sidebar-top{
-    padding:12px;
+.sidebar-header{
+    height:65px;
+    padding:10px 14px;
     display:flex;
-    justify-content:space-between;
     align-items:center;
+    justify-content:space-between;
     border-bottom:1px solid #eee;
+}
+
+.new-chat{
+    background:#128C7E;
+    color:white;
+    border-radius:8px;
+    padding:9px 12px;
 }
 
 .chat-list{
@@ -108,43 +110,47 @@ input{
     overflow-y:auto;
 }
 
+.empty{
+    text-align:center;
+    color:#777;
+    padding:35px 15px;
+}
+
 .chat-item{
     display:flex;
     align-items:center;
-    justify-content:space-between;
-    padding:13px;
+    padding:12px;
     border-bottom:1px solid #eee;
-    cursor:pointer;
 }
 
 .chat-item:hover{
     background:#f5f5f5;
 }
 
-.chat-name{
+.chat-info{
     flex:1;
+    cursor:pointer;
 }
 
-.status-online{
+.chat-name{
+    font-weight:bold;
+}
+
+.online{
     color:#16a34a;
     font-size:12px;
 }
 
-.status-offline{
+.offline{
     color:#999;
     font-size:12px;
 }
 
-.delete-btn{
+.chat-delete{
     background:#dc3545;
+    color:white;
+    border-radius:7px;
     padding:7px 9px;
-    font-size:13px;
-}
-
-.empty{
-    padding:30px 15px;
-    text-align:center;
-    color:#777;
 }
 
 .main{
@@ -155,7 +161,7 @@ input{
 }
 
 .chat-header{
-    height:60px;
+    height:65px;
     background:white;
     border-bottom:1px solid #ddd;
     display:flex;
@@ -163,8 +169,22 @@ input{
     padding:0 18px;
 }
 
-.chat-header-name{
+.back{
+    display:none;
+    background:none;
+    font-size:27px;
+    color:#128C7E;
+    margin-right:10px;
+}
+
+.current-name{
     font-weight:bold;
+}
+
+.typing{
+    color:#128C7E;
+    font-size:12px;
+    margin-left:10px;
 }
 
 .messages{
@@ -174,13 +194,14 @@ input{
 }
 
 .message{
+    position:relative;
     max-width:70%;
-    margin:7px 0;
-    padding:9px 12px;
-    border-radius:10px;
     background:white;
-    word-wrap:break-word;
+    padding:9px 12px;
+    margin:7px 0;
+    border-radius:10px;
     box-shadow:0 1px 2px #0001;
+    word-break:break-word;
 }
 
 .mine{
@@ -188,26 +209,49 @@ input{
     background:#dcf8c6;
 }
 
-.message-user{
-    font-size:11px;
+.message-text{
+    white-space:pre-wrap;
+}
+
+.message-time{
+    font-size:10px;
     color:#777;
-    margin-bottom:3px;
+    text-align:right;
+    margin-top:5px;
 }
 
 .message-status{
-    text-align:right;
     font-size:11px;
+    text-align:right;
     color:#777;
-    margin-top:3px;
 }
 
 .seen{
     color:#128C7E;
 }
 
+.message-menu{
+    display:flex;
+    gap:5px;
+    margin-top:7px;
+    justify-content:flex-end;
+}
+
+.message-menu button{
+    font-size:11px;
+    padding:5px 7px;
+    border-radius:5px;
+    background:#eee;
+}
+
+.message-menu .danger{
+    background:#dc3545;
+    color:white;
+}
+
 .composer{
     background:white;
-    padding:10px;
+    padding:9px;
     display:flex;
     gap:8px;
 }
@@ -215,34 +259,48 @@ input{
 .composer input{
     flex:1;
     min-width:0;
+    border:1px solid #ddd;
+    border-radius:20px;
+    padding:12px 15px;
+    outline:none;
 }
 
-.new-chat{
+.send{
+    background:#128C7E;
+    color:white;
+    border-radius:20px;
+    padding:0 18px;
+}
+
+.modal{
     display:none;
     position:fixed;
     inset:0;
-    background:#0006;
-    z-index:20;
+    background:#0007;
+    z-index:100;
     align-items:center;
     justify-content:center;
 }
 
-.new-box{
-    width:min(90%,400px);
+.modal-box{
+    width:min(400px,90%);
     background:white;
     padding:25px;
     border-radius:15px;
 }
 
-.new-box input{
+.modal-box input{
     width:100%;
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:8px;
     margin:10px 0;
 }
 
-.new-actions{
+.modal-actions{
     display:flex;
-    gap:8px;
     justify-content:flex-end;
+    gap:8px;
 }
 
 .error{
@@ -250,15 +308,10 @@ input{
     min-height:20px;
 }
 
-.mobile-back{
-    display:none;
-}
-
 @media(max-width:700px){
 
     .header{
         height:55px;
-        font-size:20px;
     }
 
     .app{
@@ -271,23 +324,19 @@ input{
 
     .main{
         display:none;
-        width:100%;
     }
 
-    .app.mobile-chat .sidebar{
+    .app.chat-open .sidebar{
         display:none;
     }
 
-    .app.mobile-chat .main{
+    .app.chat-open .main{
         display:flex;
+        width:100%;
     }
 
-    .mobile-back{
+    .back{
         display:block;
-        background:none;
-        color:#128C7E;
-        padding:5px 10px 5px 0;
-        font-size:22px;
     }
 
     .message{
@@ -303,7 +352,7 @@ input{
 <body>
 
 <div class="header">
-💬 My Chat
+💬 MyChat
 </div>
 
 
@@ -311,28 +360,30 @@ input{
 
 <div id="loginBox" class="login">
 
-<h2>My Chat</h2>
+<h2>MyChat</h2>
 
 <input
 id="username"
 placeholder="Username"
-autocomplete="username"
->
+autocomplete="username">
 
 <input
 id="password"
 type="password"
 placeholder="Password"
-autocomplete="current-password"
->
+autocomplete="current-password">
 
 <div>
 
-<button onclick="register()">
+<button
+class="primary"
+onclick="register()">
 Register
 </button>
 
-<button onclick="login()">
+<button
+class="primary"
+onclick="login()">
 Login
 </button>
 
@@ -348,68 +399,81 @@ Login
 <div id="app" class="app">
 
 
-<!-- SIDEBAR -->
-
 <div class="sidebar">
 
-<div class="sidebar-top">
+<div class="sidebar-header">
 
 <b>Chats</b>
 
-<button onclick="showNewChat()">
+<button
+class="new-chat"
+onclick="showNewChat()">
 ＋ New Chat
 </button>
 
 </div>
 
-<div id="chatList" class="chat-list">
+<div
+id="chatList"
+class="chat-list">
 
 <div class="empty">
-No chats yet.<br><br>
-Press <b>＋ New Chat</b> to start.
+No chats yet.
+<br><br>
+Use <b>＋ New Chat</b>
+to start.
 </div>
 
 </div>
 
 </div>
 
-
-<!-- MAIN CHAT -->
 
 <div class="main">
 
 <div class="chat-header">
 
 <button
-class="mobile-back"
-onclick="backToChats()"
->
+class="back"
+onclick="backToChats()">
 ‹
 </button>
 
-<div class="chat-header-name">
-Chat with:
+<div>
+
+<div class="current-name">
 <span id="currentUser">
 Select a chat
 </span>
 </div>
 
+<span
+id="typing"
+class="typing">
+</span>
+
 </div>
+
+</div>
+
 
 <div
 id="messages"
-class="messages"
-></div>
+class="messages">
+</div>
+
 
 <div class="composer">
 
 <input
 id="text"
 placeholder="Message..."
-onkeydown="messageKey(event)"
->
+oninput="typingChanged()"
+onkeydown="messageKey(event)">
 
-<button onclick="sendMessage()">
+<button
+class="send"
+onclick="sendMessage()">
 Send
 </button>
 
@@ -420,39 +484,37 @@ Send
 </div>
 
 
-<!-- NEW CHAT -->
+<!-- NEW CHAT MODAL -->
 
 <div
-id="newChat"
-class="new-chat"
->
+id="newModal"
+class="modal">
 
-<div class="new-box">
+<div class="modal-box">
 
 <h3>New Chat</h3>
 
 <input
 id="newUsername"
 placeholder="Enter username"
-onkeydown="newChatKey(event)"
->
+onkeydown="newChatKey(event)">
 
 <p
-id="newStatus"
-class="error"
-></p>
+id="newError"
+class="error">
+</p>
 
-<div class="new-actions">
+<div class="modal-actions">
 
 <button
-onclick="hideNewChat()"
->
+class="secondary"
+onclick="hideNewChat()">
 Cancel
 </button>
 
 <button
-onclick="startNewChat()"
->
+class="primary"
+onclick="startNewChat()">
 Start Chat
 </button>
 
@@ -465,12 +527,16 @@ Start Chat
 
 <script>
 
-let ws = null;
+let ws;
 
 let myUsername = "";
 
 let currentUser = "";
 
+let typingTimer = null;
+
+
+/* CONNECTION */
 
 function connect(){
 
@@ -491,7 +557,8 @@ function connect(){
 
         document.getElementById(
             "status"
-        ).textContent = "Connected";
+        ).textContent =
+            "Connected";
 
     };
 
@@ -501,11 +568,15 @@ function connect(){
         let data;
 
         try{
-            data = JSON.parse(event.data);
-        }catch{
+            data =
+                JSON.parse(event.data);
+        }
+        catch{
             return;
         }
 
+
+        /* REGISTER */
 
         if(data.type === "register"){
 
@@ -516,6 +587,8 @@ function connect(){
 
         }
 
+
+        /* LOGIN */
 
         if(data.type === "login"){
 
@@ -534,7 +607,8 @@ function connect(){
                 ).style.display =
                     "flex";
 
-            }else{
+            }
+            else{
 
                 document.getElementById(
                     "status"
@@ -546,12 +620,18 @@ function connect(){
         }
 
 
+        /* CHAT LIST */
+
         if(data.type === "chat_list"){
 
-            renderChats(data.chats);
+            renderChats(
+                data.chats
+            );
 
         }
 
+
+        /* NEW CHAT */
 
         if(data.type === "new_chat"){
 
@@ -563,10 +643,11 @@ function connect(){
                     data.username
                 );
 
-            }else{
+            }
+            else{
 
                 document.getElementById(
-                    "newStatus"
+                    "newError"
                 ).textContent =
                     data.message;
 
@@ -574,6 +655,8 @@ function connect(){
 
         }
 
+
+        /* HISTORY */
 
         if(data.type === "history"){
 
@@ -584,6 +667,8 @@ function connect(){
         }
 
 
+        /* MESSAGE */
+
         if(data.type === "message"){
 
             addMessage(data);
@@ -592,32 +677,112 @@ function connect(){
                 data.sender === currentUser
             ){
 
-                markSeen(currentUser);
+                markSeen(
+                    currentUser
+                );
 
             }
 
         }
 
 
+        /* SEEN */
+
         if(data.type === "seen"){
 
-            document.querySelectorAll(
-                ".mine .message-status"
-            ).forEach(function(el){
+            document
+                .querySelectorAll(
+                    ".mine .message-status"
+                )
+                .forEach(
+                    function(el){
 
-                el.textContent = "✓✓ Seen";
+                        el.textContent =
+                            "✓✓ Seen";
 
-                el.classList.add("seen");
+                        el.classList.add(
+                            "seen"
+                        );
 
-            });
+                    }
+                );
 
         }
 
 
-        if(data.type === "chat_deleted"){
+        /* TYPING */
+
+        if(data.type === "typing"){
 
             if(
-                currentUser === data.username
+                data.username === currentUser
+            ){
+
+                document.getElementById(
+                    "typing"
+                ).textContent =
+                    data.typing
+                    ? "typing..."
+                    : "";
+
+            }
+
+        }
+
+
+        /* MESSAGE DELETE FOR ME */
+
+        if(
+            data.type === "message_deleted"
+        ){
+
+            const el =
+                document.querySelector(
+                    '[data-id="' +
+                    data.id +
+                    '"]'
+                );
+
+            if(el){
+                el.remove();
+            }
+
+        }
+
+
+        /* MESSAGE DELETE BOTH */
+
+        if(
+            data.type ===
+            "message_deleted_both"
+        ){
+
+            const el =
+                document.querySelector(
+                    '[data-id="' +
+                    data.id +
+                    '"]'
+                );
+
+            if(el){
+
+                el.innerHTML =
+                    "<i>Message deleted</i>";
+
+            }
+
+        }
+
+
+        /* CHAT DELETE */
+
+        if(
+            data.type === "chat_deleted"
+        ){
+
+            if(
+                currentUser ===
+                data.username
             ){
 
                 currentUser = "";
@@ -632,9 +797,13 @@ function connect(){
                 ).innerHTML = "";
 
                 document.getElementById(
+                    "typing"
+                ).textContent = "";
+
+                document.getElementById(
                     "app"
                 ).classList.remove(
-                    "mobile-chat"
+                    "chat-open"
                 );
 
             }
@@ -644,7 +813,9 @@ function connect(){
 
         if(data.type === "error"){
 
-            alert(data.message);
+            alert(
+                data.message
+            );
 
         }
 
@@ -656,12 +827,19 @@ function connect(){
         document.getElementById(
             "status"
         ).textContent =
-            "Disconnected from server";
+            "Disconnected. Reconnecting...";
+
+        setTimeout(
+            connect,
+            3000
+        );
 
     };
 
 }
 
+
+/* REGISTER */
 
 function register(){
 
@@ -676,7 +854,10 @@ function register(){
         ).value;
 
 
-    if(!username || !password){
+    if(
+        !username ||
+        !password
+    ){
 
         document.getElementById(
             "status"
@@ -684,21 +865,29 @@ function register(){
             "Username and password required";
 
         return;
+
     }
 
 
-    ws.send(JSON.stringify({
+    ws.send(
+        JSON.stringify({
 
-        action:"register",
+            action:
+                "register",
 
-        username:username,
+            username:
+                username,
 
-        password:password
+            password:
+                password
 
-    }));
+        })
+    );
 
 }
 
+
+/* LOGIN */
 
 function login(){
 
@@ -713,7 +902,10 @@ function login(){
         ).value;
 
 
-    if(!username || !password){
+    if(
+        !username ||
+        !password
+    ){
 
         document.getElementById(
             "status"
@@ -721,21 +913,29 @@ function login(){
             "Username and password required";
 
         return;
+
     }
 
 
-    ws.send(JSON.stringify({
+    ws.send(
+        JSON.stringify({
 
-        action:"login",
+            action:
+                "login",
 
-        username:username,
+            username:
+                username,
 
-        password:password
+            password:
+                password
 
-    }));
+        })
+    );
 
 }
 
+
+/* CHAT LIST */
 
 function renderChats(chats){
 
@@ -747,108 +947,118 @@ function renderChats(chats){
     list.innerHTML = "";
 
 
-    if(chats.length === 0){
+    if(
+        chats.length === 0
+    ){
 
         list.innerHTML =
             "<div class='empty'>" +
             "No chats yet.<br><br>" +
-            "Press <b>＋ New Chat</b> to start." +
+            "Use <b>＋ New Chat</b> to start." +
             "</div>";
 
         return;
+
     }
 
 
-    chats.forEach(function(chat){
+    chats.forEach(
+        function(chat){
 
-        const row =
-            document.createElement(
-                "div"
-            );
-
-        row.className =
-            "chat-item";
-
-
-        const name =
-            document.createElement(
-                "div"
-            );
-
-        name.className =
-            "chat-name";
-
-        name.innerHTML =
-            "<b>" +
-            escapeHtml(
-                chat.username
-            ) +
-            "</b><br>" +
-
-            "<span class='" +
-            (
-                chat.online
-                ? "status-online"
-                : "status-offline"
-            ) +
-            "'>" +
-
-            (
-                chat.online
-                ? "● Online"
-                : "● Offline"
-            ) +
-
-            "</span>";
-
-
-        name.onclick =
-            function(){
-
-                openChat(
-                    chat.username
+            const row =
+                document.createElement(
+                    "div"
                 );
 
-            };
+            row.className =
+                "chat-item";
 
 
-        const del =
-            document.createElement(
-                "button"
-            );
-
-        del.className =
-            "delete-btn";
-
-        del.textContent =
-            "🗑";
-
-        del.onclick =
-            function(event){
-
-                event.stopPropagation();
-
-                deleteChat(
-                    chat.username
+            const info =
+                document.createElement(
+                    "div"
                 );
 
-            };
+            info.className =
+                "chat-info";
 
 
-        row.appendChild(name);
-        row.appendChild(del);
+            info.innerHTML =
+                "<div class='chat-name'>" +
+                escapeHtml(
+                    chat.username
+                ) +
+                "</div>" +
 
-        list.appendChild(row);
+                "<span class='" +
+                (
+                    chat.online
+                    ? "online"
+                    : "offline"
+                ) +
+                "'>" +
 
-    });
+                (
+                    chat.online
+                    ? "● Online"
+                    : "● Offline"
+                ) +
+
+                "</span>";
+
+
+            info.onclick =
+                function(){
+
+                    openChat(
+                        chat.username
+                    );
+
+                };
+
+
+            const del =
+                document.createElement(
+                    "button"
+                );
+
+            del.className =
+                "chat-delete";
+
+            del.textContent =
+                "🗑";
+
+
+            del.onclick =
+                function(event){
+
+                    event.stopPropagation();
+
+                    deleteChat(
+                        chat.username
+                    );
+
+                };
+
+
+            row.appendChild(info);
+
+            row.appendChild(del);
+
+            list.appendChild(row);
+
+        }
+    );
 
 }
 
 
+/* NEW CHAT */
+
 function showNewChat(){
 
     document.getElementById(
-        "newChat"
+        "newModal"
     ).style.display =
         "flex";
 
@@ -857,16 +1067,8 @@ function showNewChat(){
     ).value = "";
 
     document.getElementById(
-        "newStatus"
+        "newError"
     ).textContent = "";
-
-    setTimeout(function(){
-
-        document.getElementById(
-            "newUsername"
-        ).focus();
-
-    },50);
 
 }
 
@@ -874,7 +1076,7 @@ function showNewChat(){
 function hideNewChat(){
 
     document.getElementById(
-        "newChat"
+        "newModal"
     ).style.display =
         "none";
 
@@ -892,25 +1094,44 @@ function startNewChat(){
     if(!username){
 
         document.getElementById(
-            "newStatus"
+            "newError"
         ).textContent =
-            "Username डालें";
+            "Username required";
 
         return;
 
     }
 
 
-    ws.send(JSON.stringify({
+    ws.send(
+        JSON.stringify({
 
-        action:"new_chat",
+            action:
+                "new_chat",
 
-        username:username
+            username:
+                username
 
-    }));
+        })
+    );
 
 }
 
+
+function newChatKey(event){
+
+    if(
+        event.key === "Enter"
+    ){
+
+        startNewChat();
+
+    }
+
+}
+
+
+/* OPEN CHAT */
 
 function openChat(username){
 
@@ -925,6 +1146,11 @@ function openChat(username){
 
 
     document.getElementById(
+        "typing"
+    ).textContent = "";
+
+
+    document.getElementById(
         "messages"
     ).innerHTML = "";
 
@@ -932,27 +1158,38 @@ function openChat(username){
     document.getElementById(
         "app"
     ).classList.add(
-        "mobile-chat"
+        "chat-open"
     );
 
 
-    ws.send(JSON.stringify({
+    ws.send(
+        JSON.stringify({
 
-        action:"history",
+            action:
+                "history",
 
-        username:username
+            username:
+                username
 
-    }));
+        })
+    );
 
 
-    setTimeout(function(){
+    setTimeout(
+        function(){
 
-        markSeen(username);
+            markSeen(
+                username
+            );
 
-    },300);
+        },
+        300
+    );
 
 }
 
+
+/* HISTORY */
 
 function renderHistory(messages){
 
@@ -964,13 +1201,15 @@ function renderHistory(messages){
     box.innerHTML = "";
 
 
-    messages.forEach(function(msg){
+    messages.forEach(
+        function(message){
 
-        addMessage(
-            msg
-        );
+            addMessage(
+                message
+            );
 
-    });
+        }
+    );
 
 
     scrollMessages();
@@ -978,11 +1217,15 @@ function renderHistory(messages){
 }
 
 
+/* ADD MESSAGE */
+
 function addMessage(data){
 
     if(
-        data.sender !== currentUser &&
-        data.receiver !== currentUser
+        data.sender !==
+            currentUser &&
+        data.receiver !==
+            currentUser
     ){
 
         return;
@@ -999,8 +1242,15 @@ function addMessage(data){
         "message";
 
 
+    div.setAttribute(
+        "data-id",
+        data.id
+    );
+
+
     if(
-        data.sender === myUsername
+        data.sender ===
+        myUsername
     ){
 
         div.classList.add(
@@ -1010,44 +1260,59 @@ function addMessage(data){
     }
 
 
-    const user =
-        document.createElement(
-            "div"
-        );
-
-    user.className =
-        "message-user";
-
-    user.textContent =
-        data.sender;
-
-
     const body =
         document.createElement(
             "div"
         );
 
+    body.className =
+        "message-text";
+
     body.textContent =
         data.message;
 
 
-    const status =
+    const time =
         document.createElement(
             "div"
         );
 
-    status.className =
-        "message-status";
+    time.className =
+        "message-time";
+
+    time.textContent =
+        formatTime(
+            data.time
+        );
+
+
+    div.appendChild(
+        body
+    );
+
+    div.appendChild(
+        time
+    );
 
 
     if(
-        data.sender === myUsername
+        data.sender ===
+        myUsername
     ){
+
+        const status =
+            document.createElement(
+                "div"
+            );
+
+        status.className =
+            "message-status";
 
         status.textContent =
             data.seen
             ? "✓✓ Seen"
             : "✓ Sent";
+
 
         if(data.seen){
 
@@ -1057,17 +1322,89 @@ function addMessage(data){
 
         }
 
+
+        div.appendChild(
+            status
+        );
+
     }
 
 
-    div.appendChild(user);
-    div.appendChild(body);
-    div.appendChild(status);
+    const menu =
+        document.createElement(
+            "div"
+        );
+
+    menu.className =
+        "message-menu";
+
+
+    const deleteMe =
+        document.createElement(
+            "button"
+        );
+
+    deleteMe.textContent =
+        "Delete for me";
+
+    deleteMe.onclick =
+        function(){
+
+            deleteForMe(
+                data.id
+            );
+
+        };
+
+
+    menu.appendChild(
+        deleteMe
+    );
+
+
+    if(
+        data.sender ===
+        myUsername
+    ){
+
+        const deleteBoth =
+            document.createElement(
+                "button"
+            );
+
+        deleteBoth.className =
+            "danger";
+
+        deleteBoth.textContent =
+            "Delete for both";
+
+        deleteBoth.onclick =
+            function(){
+
+                deleteForBoth(
+                    data.id
+                );
+
+            };
+
+
+        menu.appendChild(
+            deleteBoth
+        );
+
+    }
+
+
+    div.appendChild(
+        menu
+    );
 
 
     document.getElementById(
         "messages"
-    ).appendChild(div);
+    ).appendChild(
+        div
+    );
 
 
     scrollMessages();
@@ -1075,12 +1412,14 @@ function addMessage(data){
 }
 
 
+/* SEND */
+
 function sendMessage(){
 
     if(!currentUser){
 
         alert(
-            "पहले New Chat से chat शुरू करें"
+            "पहले chat select करें"
         );
 
         return;
@@ -1101,15 +1440,23 @@ function sendMessage(){
         return;
 
 
-    ws.send(JSON.stringify({
+    stopTyping();
 
-        action:"message",
 
-        receiver:currentUser,
+    ws.send(
+        JSON.stringify({
 
-        message:text
+            action:
+                "message",
 
-    }));
+            receiver:
+                currentUser,
+
+            message:
+                text
+
+        })
+    );
 
 
     input.value = "";
@@ -1119,60 +1466,195 @@ function sendMessage(){
 }
 
 
-function markSeen(username){
+/* TYPING */
 
-    if(!username || !ws)
+function typingChanged(){
+
+    if(!currentUser)
         return;
 
 
-    ws.send(JSON.stringify({
+    ws.send(
+        JSON.stringify({
 
-        action:"seen",
+            action:
+                "typing",
 
-        username:username
+            receiver:
+                currentUser,
 
-    }));
+            typing:
+                true
+
+        })
+    );
+
+
+    clearTimeout(
+        typingTimer
+    );
+
+
+    typingTimer =
+        setTimeout(
+            stopTyping,
+            1200
+        );
 
 }
 
+
+function stopTyping(){
+
+    if(
+        !currentUser ||
+        !ws
+    )
+        return;
+
+
+    ws.send(
+        JSON.stringify({
+
+            action:
+                "typing",
+
+            receiver:
+                currentUser,
+
+            typing:
+                false
+
+        })
+    );
+
+}
+
+
+/* SEEN */
+
+function markSeen(username){
+
+    if(!username)
+        return;
+
+
+    ws.send(
+        JSON.stringify({
+
+            action:
+                "seen",
+
+            username:
+                username
+
+        })
+    );
+
+}
+
+
+/* DELETE MESSAGE FOR ME */
+
+function deleteForMe(id){
+
+    if(
+        !confirm(
+            "Delete this message for you?"
+        )
+    )
+        return;
+
+
+    ws.send(
+        JSON.stringify({
+
+            action:
+                "delete_for_me",
+
+            id:
+                id
+
+        })
+    );
+
+}
+
+
+/* DELETE MESSAGE FOR BOTH */
+
+function deleteForBoth(id){
+
+    if(
+        !confirm(
+            "Delete this message for both users?"
+        )
+    )
+        return;
+
+
+    ws.send(
+        JSON.stringify({
+
+            action:
+                "delete_for_both",
+
+            id:
+                id
+
+        })
+    );
+
+}
+
+
+/* DELETE CHAT */
 
 function deleteChat(username){
 
-    const ok =
-        confirm(
-            "Delete this chat for both users?"
-        );
-
-
-    if(!ok)
+    if(
+        !confirm(
+            "Delete entire chat for both users?"
+        )
+    )
         return;
 
 
-    ws.send(JSON.stringify({
+    ws.send(
+        JSON.stringify({
 
-        action:"delete_chat",
+            action:
+                "delete_chat",
 
-        username:username
+            username:
+                username
 
-    }));
+        })
+    );
 
 }
 
+
+/* BACK */
 
 function backToChats(){
 
     document.getElementById(
         "app"
     ).classList.remove(
-        "mobile-chat"
+        "chat-open"
     );
 
 }
 
 
+/* ENTER */
+
 function messageKey(event){
 
-    if(event.key === "Enter"){
+    if(
+        event.key === "Enter"
+    ){
 
         event.preventDefault();
 
@@ -1183,18 +1665,46 @@ function messageKey(event){
 }
 
 
-function newChatKey(event){
+/* TIME */
 
-    if(event.key === "Enter"){
+function formatTime(value){
 
-        event.preventDefault();
+    if(!value)
+        return "";
 
-        startNewChat();
+    const d =
+        new Date(
+            value.replace(
+                " ",
+                "T"
+            ) +
+            "Z"
+        );
+
+
+    if(
+        Number.isNaN(
+            d.getTime()
+        )
+    ){
+
+        return "";
 
     }
 
+
+    return d.toLocaleTimeString(
+        [],
+        {
+            hour:"2-digit",
+            minute:"2-digit"
+        }
+    );
+
 }
 
+
+/* SCROLL */
 
 function scrollMessages(){
 
@@ -1208,6 +1718,8 @@ function scrollMessages(){
 
 }
 
+
+/* SECURITY */
 
 function escapeHtml(text){
 
@@ -1224,10 +1736,11 @@ function escapeHtml(text){
 }
 
 
+/* START */
+
 connect();
 
 </script>
 
 </body>
-
 </html>
